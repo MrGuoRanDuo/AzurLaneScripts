@@ -62,25 +62,38 @@ def provoke_enemy():
         auto_adb.wait('temp_images/stage/switch-over.png').click(2)
 
     image_rel_path_list = TempUtils.get_temp_rel_path_list('temp_images/enemy')
+    image_rel_path_list_boss = TempUtils.get_temp_rel_path_list('temp_images/boss')
 
     swipe_times = 0
     while True:
+        flag_boss_hit = False
         print('寻找敌人 ... ')
         enemy_loc = auto_adb.get_location(*image_rel_path_list)
+        enemy_loc_boss = auto_adb.get_location(*image_rel_path_list_boss)
+
+        # 3-4 只使用第一舰队 并且以最少的道中次数 打通BOSS
+        if enemy_loc_boss is None:
+            pass
+        else:
+            flag_boss_hit = True
+            enemy_loc_boss.click()
+
         if enemy_loc is None:
             swipe_times += 1
             print('未找到敌人, 尝试滑动页面 %d' % swipe_times)
             Swiper.swipe(swipe_times)
             continue
+        else:
+            enemy_loc.click()
 
         # 如果找到的是boss, 且当前是第一队, 则切换到第二队开始寻找敌人
-        is_boss = 'boss' in enemy_loc.temp_rel_path
-        is_first_team = auto_adb.check('temp_images/stage/team-1.png')
-        if is_boss and is_first_team:
-            auto_adb.wait('temp_images/stage/switch-over.png').click(2)
-            continue
+        # is_boss = 'boss' in enemy_loc.temp_rel_path
+        # is_first_team = auto_adb.check('temp_images/stage/team-1.png')
+        # if is_boss and is_first_team:
+        #     auto_adb.wait('temp_images/stage/switch-over.png').click(2)
+        #     continue
 
-        enemy_loc.click()
+        # enemy_loc.click()
         # 等待进击按钮出现, 期间会不断处理意外情况, 如果指定时间内出现按钮, 则执行结束, 否则再次循环
         res = auto_adb.wait('temp_images/fight/fight.png', max_wait_time=8,
                             episode=deal_accident_when_provoke_enemy).click()
@@ -91,6 +104,8 @@ def provoke_enemy():
         else:
             # 如果点击后未进入确认界面, 说明那里不可到达, 此时去除image_rel_path_list中的值
             image_rel_path_list.remove(enemy_loc.temp_rel_path)
+        if flag_boss_hit:
+            break
 
 
 # 处理进击时的意外情况
